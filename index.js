@@ -2,6 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const dotenv = require("dotenv");
 const route = require("./src/router/index");
+require("./src/connections/db")
 class Server {
   constructor() {
     // import variables from .env file
