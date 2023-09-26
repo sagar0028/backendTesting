@@ -1,6 +1,6 @@
 const db = require("../connections/db");
-const { user_subscription, user, subscription_plans,payment_detail } = db;
-const {nodeMailer} = require("../utils/helper/mailer")
+const { user_subscription, user, subscription_plans, payment_detail } = db;
+const { nodeMailer } = require("../utils/helper/mailer");
 class CronsController {
   constructor() {
     this.route = Router();
@@ -11,6 +11,16 @@ class CronsController {
     this.route.post("/cron", this.getSubscribersToNotify);
   }
 
+  cronJob = async () => {
+    const _argv = process.argv.slice(2);
+    console.log("argv -> ", _argv);
+    const _arg = _argv[0].toLocaleLowerCase();
+    switch (_arg) {
+      case "get-Subscribers-To-Notify":
+        await getSubscribersToNotify();
+        break;
+    }
+  };
   async getSubscribersToNotify(payment_timestamp_offset, page, page_size) {
     const currentDate = new Date();
     const paymentDueDate = new Date(
@@ -30,7 +40,12 @@ class CronsController {
     for (let i = 0; i < subscribers.length; i++) {
       const {
         user: { user_id, email },
-        subscription_plans: { subscription_plan, price, duration, payment_time },
+        subscription_plans: {
+          subscription_plan,
+          price,
+          duration,
+          payment_time,
+        },
       } = subscribers[i];
       const users = await db.user.findAll({ where: { id: user_id } });
       if (users) {
@@ -45,7 +60,9 @@ class CronsController {
             .toString()
             .replace(/{Email}/g, `${email}`)
             .replace(/{userName}/g, `${name}`)
-            .replace(/{phoneNumber}/g, `${mobile}`);
+            .replace(/{phoneNumber}/g, `${mobile}`)
+            .replace(/{Plan}/g, `${subscription_plan}`)
+            .replace(/{Due Date}/g, `${duration}`);
           let subject = "Notificatoin for Subscription Plan ";
           let sentEmail = await nodeMailer.nodeMailer({
             toEmail: email,
